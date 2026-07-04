@@ -12,12 +12,10 @@
         body { margin: 0; overflow: hidden; background: #0a0a0a; }
         canvas { display: block; }
         
-        /* Chrome/Glass effect for control panel */
         .glass {
             background: rgba(255,255,255,0.06);
             backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.12);
         }
     </style>
 </head>
@@ -32,12 +30,12 @@
     <div class="control-panel hidden md:block absolute top-20 right-5 z-50 w-72 glass rounded-3xl p-5 text-white shadow-2xl">
         
         <div class="mb-6">
-            <div class="text-[10px] text-zinc-400 mb-2 px-1">LIGHTING PRESETS</div>
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="applyLightingPreset('studio')" class="text-xs py-3 rounded-2xl bg-white/10 hover:bg-white/20 active:bg-white/30 transition">Light</button>
-                <button onclick="applyLightingPreset('dramatic')" class="text-xs py-3 rounded-2xl bg-white/10 hover:bg-white/20 active:bg-white/30 transition">Dark</button>
-                <button onclick="applyLightingPreset('sunset')" class="text-xs py-3 rounded-2xl bg-white/10 hover:bg-white/20 active:bg-white/30 transition">Sunset</button>
-                <button onclick="applyLightingPreset('chrome')" class="text-xs py-3 rounded-2xl bg-gradient-to-r from-cyan-400 to-purple-500 hover:brightness-110 transition">Chrome</button>
+            <div class="text-[10px] text-zinc-400 mb-2 px-1">LIGHTING</div>
+            <div class="grid grid-cols-1 gap-2">
+                <button onclick="applyChromeEffect()" 
+                        class="text-sm py-4 rounded-2xl bg-gradient-to-r from-cyan-400 via-white to-purple-500 text-black font-semibold hover:brightness-110 transition">
+                    ⚡ STRONG CHROME
+                </button>
             </div>
         </div>
 
@@ -60,23 +58,21 @@
             </div>
 
             <div class="flex gap-2">
-                <button onclick="spin360()" class="flex-1 bg-white/10 hover:bg-white/20 active:bg-white/30 py-3 rounded-2xl text-sm font-medium">Spin 360°</button>
-                <button onclick="resetView()" class="flex-1 bg-white/10 hover:bg-white/20 active:bg-white/30 py-3 rounded-2xl text-sm font-medium">Reset</button>
+                <button onclick="spin360()" class="flex-1 bg-white/10 hover:bg-white/20 py-3 rounded-2xl text-sm font-medium">Spin 360°</button>
+                <button onclick="resetView()" class="flex-1 bg-white/10 hover:bg-white/20 py-3 rounded-2xl text-sm font-medium">Reset</button>
             </div>
         </div>
     </div>
 
-    <!-- Loading Screen -->
+    <!-- Loading -->
     <div id="loading" class="absolute inset-0 z-50 flex items-center justify-center bg-black">
         <div class="text-center px-4">
             <img src="https://arweave.net/gh82aALwC-_KyeLWzvbLhS3EX1SHuu4UfEox0K_p1c0" 
-                 alt="Loading" 
                  class="max-w-[260px] md:max-w-[340px] mx-auto mb-8 rounded-3xl shadow-2xl">
-
             <div class="w-72 h-1.5 bg-white/10 rounded-full mx-auto overflow-hidden">
-                <div id="progress-bar" class="h-1.5 bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all duration-300" style="width: 0%"></div>
+                <div id="progress-bar" class="h-1.5 bg-gradient-to-r from-cyan-400 to-white transition-all duration-300" style="width: 0%"></div>
             </div>
-            <p id="progress-text" class="text-emerald-400 text-sm font-mono mt-3">0%</p>
+            <p id="progress-text" class="text-cyan-400 text-sm font-mono mt-3">0%</p>
         </div>
     </div>
 
@@ -95,7 +91,8 @@
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
-        const modelUrl = 'https://arweave.net/NR9SgPKOXKZxdBX6TivN-ES-ZYugdp5ldvAiOj8Pls8';
+        // === مدل جدید ===
+        const modelUrl = 'https://arweave.net/UoELuLYmKkL7xCbtIq37-mbPxAGH5gke1gOJ5md66ss';
 
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -103,7 +100,7 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.1;
+        renderer.toneMappingExposure = 1.4;
         document.body.appendChild(renderer.domElement);
 
         const controls = new OrbitControls(camera, renderer.domElement);
@@ -112,42 +109,46 @@
         controls.autoRotateSpeed = 0.35;
         controls.enablePan = false;
 
-        // Lights
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x222222, 1.2);
+        // Lights (برای افکت کرومی قوی)
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x222222, 1.8);
         scene.add(hemiLight);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 2.4);
-        dirLight.position.set(8, 12, 6);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 5.5);
+        dirLight.position.set(10, 15, -8);
         scene.add(dirLight);
 
-        // Star Particles
+        const pointLight = new THREE.PointLight(0x88ccff, 4, 0);
+        pointLight.position.set(-8, 5, 12);
+        scene.add(pointLight);
+
+        let model;
+
+        // Starfield
         let starParticles;
         function createStarParticles() {
-            const count = 5200;
+            const count = 6000;
             const geometry = new THREE.BufferGeometry();
             const positions = new Float32Array(count * 3);
             const velocities = new Float32Array(count * 3);
 
             for (let i = 0; i < count; i++) {
                 const i3 = i * 3;
-                positions[i3]     = (Math.random() - 0.5) * 80;
-                positions[i3 + 1] = (Math.random() - 0.5) * 80;
-                positions[i3 + 2] = (Math.random() - 0.5) * 80;
-
-                velocities[i3]     = (Math.random() - 0.5) * 0.002;
-                velocities[i3 + 1] = (Math.random() - 0.5) * 0.002;
-                velocities[i3 + 2] = (Math.random() - 0.5) * 0.002;
+                positions[i3] = (Math.random() - 0.5) * 90;
+                positions[i3 + 1] = (Math.random() - 0.5) * 90;
+                positions[i3 + 2] = (Math.random() - 0.5) * 90;
+                velocities[i3] = (Math.random() - 0.5) * 0.0018;
+                velocities[i3 + 1] = (Math.random() - 0.5) * 0.0018;
+                velocities[i3 + 2] = (Math.random() - 0.5) * 0.0018;
             }
 
             geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-
             const material = new THREE.PointsMaterial({
-                size: 0.028,
-                color: 0xaaaaaa,
+                size: 0.025,
+                color: 0xcccccc,
                 transparent: true,
-                opacity: 0.9,
+                opacity: 0.85,
                 depthWrite: false,
-                blending: THREE.AdditiveBlending,
+                blending: THREE.AdditiveBlending
             });
 
             starParticles = new THREE.Points(geometry, material);
@@ -155,33 +156,31 @@
             starParticles.userData.velocities = velocities;
         }
 
-        // ================== MODEL LOADING ==================
+        // ================== LOADING ==================
         const dracoLoader = new DRACOLoader();
         dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
-        const loader = new GLTFLoader();
-        loader.setDRACOLoader(dracoLoader);
+        const loader = new GLTFLoader().setDRACOLoader(dracoLoader);
 
-        let model;
         const loadingScreen = document.getElementById('loading');
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
 
-        // Fake progress (برای وقتی که سرور total نمی‌دهد)
         let fakeProgress = 0;
         const fakeInterval = setInterval(() => {
-            if (fakeProgress < 92) {
-                fakeProgress += Math.random() * 8;
-                progressBar.style.width = fakeProgress + '%';
+            if (fakeProgress < 95) {
+                fakeProgress += Math.random() * 7 + 2;
+                progressBar.style.width = Math.min(fakeProgress, 100) + '%';
                 progressText.textContent = Math.floor(fakeProgress) + '%';
             }
-        }, 120);
+        }, 100);
 
         loader.load(modelUrl,
-            function (gltf) {
+            (gltf) => {
                 clearInterval(fakeInterval);
                 model = gltf.scene;
                 scene.add(model);
 
+                // Center model
                 const box = new THREE.Box3().setFromObject(model);
                 const center = box.getCenter(new THREE.Vector3());
                 model.position.sub(center);
@@ -189,20 +188,30 @@
                 const size = box.getSize(new THREE.Vector3());
                 const maxDim = Math.max(size.x, size.y, size.z);
 
-                // === تغییر ۲: فاصله نزدیک‌تر ===
-                const cameraZ = maxDim * 1.25;   // قبلاً 1.6 بود
-                camera.position.set(cameraZ * 0.6, maxDim * 0.95, cameraZ * 0.95);
-                camera.lookAt(0, maxDim * 0.15, 0);
-                
-                controls.target.set(0, maxDim * 0.12, 0);
+                // === فاصله دوربین (نزدیک‌تر - ۱.۹) ===
+                const cameraZ = maxDim * 1.9;
+                camera.position.set(cameraZ * 0.55, maxDim * 0.9, cameraZ * 0.9);
+                camera.lookAt(0, maxDim * 0.1, 0);
+
+                controls.target.set(0, maxDim * 0.08, 0);
                 controls.update();
 
-                // Hide loading
-                loadingScreen.style.transition = 'opacity 0.8s ease';
+                // اعمال افکت کرومی قوی روی تمام متریال‌ها
+                model.traverse((child) => {
+                    if (child.isMesh && child.material) {
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(mat => applyChromeMaterial(mat));
+                        } else {
+                            applyChromeMaterial(child.material);
+                        }
+                    }
+                });
+
+                loadingScreen.style.transition = 'opacity 0.8s';
                 loadingScreen.style.opacity = '0';
-                setTimeout(() => loadingScreen.style.display = 'none', 800);
+                setTimeout(() => loadingScreen.style.display = 'none', 700);
             },
-            function (xhr) {
+            (xhr) => {
                 if (xhr.lengthComputable) {
                     clearInterval(fakeInterval);
                     const percent = Math.round((xhr.loaded / xhr.total) * 100);
@@ -210,48 +219,51 @@
                     progressText.textContent = percent + '%';
                 }
             },
-            function (error) {
-                console.error(error);
+            (err) => {
+                console.error(err);
                 clearInterval(fakeInterval);
-                progressText.style.color = '#f87171';
-                progressText.innerHTML = `Failed to load<br><span class="text-xs">Check console</span>`;
+                progressText.innerHTML = `خطا در لود مدل`;
             }
         );
 
-        // ================== LIGHTING PRESETS ==================
-        window.applyLightingPreset = function (preset) {
-            switch(preset) {
-                case 'studio': // Light
-                    dirLight.intensity = 2.6;
-                    dirLight.position.set(8, 12, 6);
-                    hemiLight.intensity = 1.3;
-                    renderer.toneMappingExposure = 1.1;
-                    break;
-                    
-                case 'dramatic': // Dark
-                    dirLight.intensity = 3.8;
-                    dirLight.position.set(-15, 10, -8);
-                    hemiLight.intensity = 0.6;
-                    renderer.toneMappingExposure = 0.9;
-                    break;
-                    
-                case 'sunset':
-                    dirLight.intensity = 2.9;
-                    dirLight.position.set(12, 6, 10);
-                    hemiLight.intensity = 1.0;
-                    renderer.toneMappingExposure = 1.15;
-                    break;
-                    
-                case 'chrome':
-                    dirLight.intensity = 4.2;
-                    dirLight.position.set(5, 15, -10);
-                    hemiLight.intensity = 1.6;
-                    renderer.toneMappingExposure = 1.35;
-                    break;
+        function applyChromeMaterial(mat) {
+            if (mat.isMeshStandardMaterial || mat.isMeshPhongMaterial) {
+                mat.metalness = 1.0;
+                mat.roughness = 0.08;        // خیلی براق
+                mat.envMapIntensity = 2.8;
+                mat.needsUpdate = true;
             }
+        }
+
+        // ================== STRONG CHROME EFFECT ==================
+        window.applyChromeEffect = function () {
+            if (!model) return;
+            
+            dirLight.intensity = 6.5;
+            dirLight.position.set(12, 18, -10);
+            
+            pointLight.intensity = 5.5;
+            pointLight.position.set(-10, 8, 15);
+            
+            hemiLight.intensity = 2.2;
+            renderer.toneMappingExposure = 1.55;
+
+            model.traverse((child) => {
+                if (child.isMesh && child.material) {
+                    if (Array.isArray(child.material)) {
+                        child.material.forEach(m => {
+                            if (m.metalness !== undefined) m.metalness = 1;
+                            if (m.roughness !== undefined) m.roughness = 0.05;
+                        });
+                    } else if (child.material.metalness !== undefined) {
+                        child.material.metalness = 1;
+                        child.material.roughness = 0.05;
+                    }
+                }
+            });
         };
 
-        // بقیه توابع بدون تغییر
+        // بقیه توابع
         window.toggleAutoRotate = function () {
             controls.autoRotate = !controls.autoRotate;
             document.getElementById('autoBtn').textContent = controls.autoRotate ? "ON" : "OFF";
@@ -269,7 +281,7 @@
             const end = start + Math.PI * 2;
             const startTime = Date.now();
             function animateSpin() {
-                const progress = Math.min((Date.now() - startTime) / 1200, 1);
+                const progress = Math.min((Date.now() - startTime) / 1100, 1);
                 model.rotation.y = start + (end - start) * (1 - Math.pow(1 - progress, 3));
                 if (progress < 1) requestAnimationFrame(animateSpin);
             }
@@ -278,7 +290,7 @@
 
         window.resetView = function () {
             if (model) {
-                camera.position.set(12, 9, 14);
+                camera.position.set(15, 10, 16);
                 controls.target.set(0, 0.5, 0);
                 controls.update();
             }
@@ -286,7 +298,6 @@
 
         function init() {
             createStarParticles();
-            document.getElementById('speedVal').textContent = controls.autoRotateSpeed.toFixed(2);
         }
 
         function animate() {
@@ -302,11 +313,10 @@
                     pos.array[i3 + 1] += vel[i3 + 1];
                     pos.array[i3 + 2] += vel[i3 + 2];
 
-                    const dist = Math.hypot(pos.array[i3], pos.array[i3+1], pos.array[i3+2]);
-                    if (dist > 45) {
-                        pos.array[i3] = (Math.random() - 0.5) * 70;
-                        pos.array[i3 + 1] = (Math.random() - 0.5) * 70;
-                        pos.array[i3 + 2] = (Math.random() - 0.5) * 70;
+                    if (Math.hypot(pos.array[i3], pos.array[i3+1], pos.array[i3+2]) > 50) {
+                        pos.array[i3] = (Math.random() - 0.5) * 80;
+                        pos.array[i3 + 1] = (Math.random() - 0.5) * 80;
+                        pos.array[i3 + 2] = (Math.random() - 0.5) * 80;
                     }
                 }
                 pos.needsUpdate = true;
