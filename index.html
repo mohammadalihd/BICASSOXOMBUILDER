@@ -5,44 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>pepe</title>
 
-    <!-- Favicon 🐸 -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='78' x='50' text-anchor='middle' font-size='78'%3E🐸%3C/text%3E%3C/svg%3E">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { margin: 0; overflow: hidden; background: #0a0a0a; }
         canvas { display: block; }
+        
+        /* Chrome/Glass effect for control panel */
+        .glass {
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
     </style>
 </head>
 <body>
 
     <!-- Header -->
-    <div class="absolute top-0 left-0 right-0 z-50 px-5 py-3 flex items-center bg-black/60">
+    <div class="absolute top-0 left-0 right-0 z-50 px-5 py-3 flex items-center bg-black/70 backdrop-blur-md">
         <h1 class="text-2xl font-semibold text-white tracking-tight">pepe</h1>
     </div>
 
-    <!-- Control Panel (فقط دسکتاپ) -->
-    <div class="control-panel hidden md:block absolute top-20 right-5 z-50 w-72 bg-zinc-900/95 border border-white/10 rounded-3xl p-5 text-white">
+    <!-- Control Panel -->
+    <div class="control-panel hidden md:block absolute top-20 right-5 z-50 w-72 glass rounded-3xl p-5 text-white shadow-2xl">
         
-        <div class="mb-5">
-            <div class="text-[10px] text-zinc-400 mb-1.5 px-1">LIGHTING</div>
-            <div class="grid grid-cols-3 gap-1.5">
-                <button onclick="applyLightingPreset('studio')" class="text-xs py-2 rounded-2xl bg-white/10 hover:bg-white/20 active:bg-white/30">Studio</button>
-                <button onclick="applyLightingPreset('dramatic')" class="text-xs py-2 rounded-2xl bg-white/10 hover:bg-white/20 active:bg-white/30">Dramatic</button>
-                <button onclick="applyLightingPreset('sunset')" class="text-xs py-2 rounded-2xl bg-white/10 hover:bg-white/20 active:bg-white/30">Sunset</button>
+        <div class="mb-6">
+            <div class="text-[10px] text-zinc-400 mb-2 px-1">LIGHTING PRESETS</div>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="applyLightingPreset('studio')" class="text-xs py-3 rounded-2xl bg-white/10 hover:bg-white/20 active:bg-white/30 transition">Light</button>
+                <button onclick="applyLightingPreset('dramatic')" class="text-xs py-3 rounded-2xl bg-white/10 hover:bg-white/20 active:bg-white/30 transition">Dark</button>
+                <button onclick="applyLightingPreset('sunset')" class="text-xs py-3 rounded-2xl bg-white/10 hover:bg-white/20 active:bg-white/30 transition">Sunset</button>
+                <button onclick="applyLightingPreset('chrome')" class="text-xs py-3 rounded-2xl bg-gradient-to-r from-cyan-400 to-purple-500 hover:brightness-110 transition">Chrome</button>
             </div>
         </div>
 
         <div>
             <div class="text-[10px] text-zinc-400 mb-1.5 px-1">ROTATION</div>
             
-            <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center justify-between mb-3">
                 <span class="text-sm">Auto Rotate</span>
                 <button onclick="toggleAutoRotate()" id="autoBtn"
-                        class="px-4 py-0.5 text-xs rounded-full bg-emerald-600">ON</button>
+                        class="px-5 py-1 text-xs rounded-full bg-emerald-600 font-medium">ON</button>
             </div>
 
-            <div class="mb-2.5">
+            <div class="mb-4">
                 <div class="flex justify-between text-xs mb-1">
                     <span>Speed</span>
                     <span id="speedVal">0.35</span>
@@ -52,8 +60,8 @@
             </div>
 
             <div class="flex gap-2">
-                <button onclick="spin360()" class="flex-1 bg-white/10 hover:bg-white/20 active:bg-white/30 py-2 rounded-2xl text-sm">Spin 360°</button>
-                <button onclick="resetView()" class="flex-1 bg-white/10 hover:bg-white/20 active:bg-white/30 py-2 rounded-2xl text-sm">Reset</button>
+                <button onclick="spin360()" class="flex-1 bg-white/10 hover:bg-white/20 active:bg-white/30 py-3 rounded-2xl text-sm font-medium">Spin 360°</button>
+                <button onclick="resetView()" class="flex-1 bg-white/10 hover:bg-white/20 active:bg-white/30 py-3 rounded-2xl text-sm font-medium">Reset</button>
             </div>
         </div>
     </div>
@@ -63,12 +71,12 @@
         <div class="text-center px-4">
             <img src="https://arweave.net/gh82aALwC-_KyeLWzvbLhS3EX1SHuu4UfEox0K_p1c0" 
                  alt="Loading" 
-                 class="max-w-[260px] md:max-w-[340px] mx-auto mb-6 rounded-2xl shadow-2xl">
+                 class="max-w-[260px] md:max-w-[340px] mx-auto mb-8 rounded-3xl shadow-2xl">
 
-            <div class="w-64 h-1 bg-white/20 rounded-full mx-auto overflow-hidden mb-2">
-                <div id="progress-bar" class="h-1 bg-white transition-all duration-200" style="width: 0%"></div>
+            <div class="w-72 h-1.5 bg-white/10 rounded-full mx-auto overflow-hidden">
+                <div id="progress-bar" class="h-1.5 bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all duration-300" style="width: 0%"></div>
             </div>
-            <p id="progress-text" class="text-emerald-400 text-sm font-mono">0%</p>
+            <p id="progress-text" class="text-emerald-400 text-sm font-mono mt-3">0%</p>
         </div>
     </div>
 
@@ -87,7 +95,6 @@
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
-        // مدل جدید (TX ID که دادی)
         const modelUrl = 'https://arweave.net/NR9SgPKOXKZxdBX6TivN-ES-ZYugdp5ldvAiOj8Pls8';
 
         const scene = new THREE.Scene();
@@ -96,49 +103,51 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.1;
         document.body.appendChild(renderer.domElement);
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.autoRotate = true;
         controls.autoRotateSpeed = 0.35;
+        controls.enablePan = false;
 
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x222222, 1.1);
+        // Lights
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x222222, 1.2);
         scene.add(hemiLight);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 2.2);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 2.4);
         dirLight.position.set(8, 12, 6);
         scene.add(dirLight);
 
-        // ================== STAR PARTICLES ==================
+        // Star Particles
         let starParticles;
         function createStarParticles() {
-            const count = 4800;
+            const count = 5200;
             const geometry = new THREE.BufferGeometry();
             const positions = new Float32Array(count * 3);
             const velocities = new Float32Array(count * 3);
 
             for (let i = 0; i < count; i++) {
                 const i3 = i * 3;
-                positions[i3] = (Math.random() - 0.5) * 70;
-                positions[i3 + 1] = (Math.random() - 0.5) * 70;
-                positions[i3 + 2] = (Math.random() - 0.5) * 70;
+                positions[i3]     = (Math.random() - 0.5) * 80;
+                positions[i3 + 1] = (Math.random() - 0.5) * 80;
+                positions[i3 + 2] = (Math.random() - 0.5) * 80;
 
-                velocities[i3] = (Math.random() - 0.5) * 0.0025;
-                velocities[i3 + 1] = (Math.random() - 0.5) * 0.0025;
-                velocities[i3 + 2] = (Math.random() - 0.5) * 0.0025;
+                velocities[i3]     = (Math.random() - 0.5) * 0.002;
+                velocities[i3 + 1] = (Math.random() - 0.5) * 0.002;
+                velocities[i3 + 2] = (Math.random() - 0.5) * 0.002;
             }
 
             geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
             const material = new THREE.PointsMaterial({
-                size: 0.032,
-                color: 0xdddddd,
+                size: 0.028,
+                color: 0xaaaaaa,
                 transparent: true,
-                opacity: 0.85,
+                opacity: 0.9,
                 depthWrite: false,
                 blending: THREE.AdditiveBlending,
-                sizeAttenuation: true,
             });
 
             starParticles = new THREE.Points(geometry, material);
@@ -157,8 +166,19 @@
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
 
+        // Fake progress (برای وقتی که سرور total نمی‌دهد)
+        let fakeProgress = 0;
+        const fakeInterval = setInterval(() => {
+            if (fakeProgress < 92) {
+                fakeProgress += Math.random() * 8;
+                progressBar.style.width = fakeProgress + '%';
+                progressText.textContent = Math.floor(fakeProgress) + '%';
+            }
+        }, 120);
+
         loader.load(modelUrl,
             function (gltf) {
+                clearInterval(fakeInterval);
                 model = gltf.scene;
                 scene.add(model);
 
@@ -168,38 +188,70 @@
 
                 const size = box.getSize(new THREE.Vector3());
                 const maxDim = Math.max(size.x, size.y, size.z);
-                const cameraZ = maxDim * 1.6;
 
-                camera.position.set(cameraZ * 0.65, maxDim * 1.1, cameraZ);
-                camera.lookAt(0, maxDim * 0.25, 0);
-                controls.target.set(0, maxDim * 0.2, 0);
+                // === تغییر ۲: فاصله نزدیک‌تر ===
+                const cameraZ = maxDim * 1.25;   // قبلاً 1.6 بود
+                camera.position.set(cameraZ * 0.6, maxDim * 0.95, cameraZ * 0.95);
+                camera.lookAt(0, maxDim * 0.15, 0);
+                
+                controls.target.set(0, maxDim * 0.12, 0);
                 controls.update();
 
-                loadingScreen.style.transition = 'opacity 0.6s ease';
+                // Hide loading
+                loadingScreen.style.transition = 'opacity 0.8s ease';
                 loadingScreen.style.opacity = '0';
-                setTimeout(() => loadingScreen.style.display = 'none', 600);
+                setTimeout(() => loadingScreen.style.display = 'none', 800);
             },
             function (xhr) {
                 if (xhr.lengthComputable) {
+                    clearInterval(fakeInterval);
                     const percent = Math.round((xhr.loaded / xhr.total) * 100);
                     progressBar.style.width = percent + '%';
                     progressText.textContent = percent + '%';
                 }
             },
             function (error) {
-                console.error("Model Load Error:", error);
+                console.error(error);
+                clearInterval(fakeInterval);
                 progressText.style.color = '#f87171';
-                progressText.innerHTML = `Failed to load model<br><span style="font-size:11px">Check console (F12)</span>`;
+                progressText.innerHTML = `Failed to load<br><span class="text-xs">Check console</span>`;
             }
         );
 
-        // ================== CONTROLS ==================
+        // ================== LIGHTING PRESETS ==================
         window.applyLightingPreset = function (preset) {
-            if (preset === 'studio') { dirLight.intensity = 2.2; dirLight.position.set(8, 12, 6); }
-            else if (preset === 'dramatic') { dirLight.intensity = 3.5; dirLight.position.set(-12, 9, -6); }
-            else if (preset === 'sunset') { dirLight.intensity = 2.8; dirLight.position.set(10, 7, 12); }
+            switch(preset) {
+                case 'studio': // Light
+                    dirLight.intensity = 2.6;
+                    dirLight.position.set(8, 12, 6);
+                    hemiLight.intensity = 1.3;
+                    renderer.toneMappingExposure = 1.1;
+                    break;
+                    
+                case 'dramatic': // Dark
+                    dirLight.intensity = 3.8;
+                    dirLight.position.set(-15, 10, -8);
+                    hemiLight.intensity = 0.6;
+                    renderer.toneMappingExposure = 0.9;
+                    break;
+                    
+                case 'sunset':
+                    dirLight.intensity = 2.9;
+                    dirLight.position.set(12, 6, 10);
+                    hemiLight.intensity = 1.0;
+                    renderer.toneMappingExposure = 1.15;
+                    break;
+                    
+                case 'chrome':
+                    dirLight.intensity = 4.2;
+                    dirLight.position.set(5, 15, -10);
+                    hemiLight.intensity = 1.6;
+                    renderer.toneMappingExposure = 1.35;
+                    break;
+            }
         };
 
+        // بقیه توابع بدون تغییر
         window.toggleAutoRotate = function () {
             controls.autoRotate = !controls.autoRotate;
             document.getElementById('autoBtn').textContent = controls.autoRotate ? "ON" : "OFF";
@@ -217,7 +269,7 @@
             const end = start + Math.PI * 2;
             const startTime = Date.now();
             function animateSpin() {
-                const progress = Math.min((Date.now() - startTime) / 1300, 1);
+                const progress = Math.min((Date.now() - startTime) / 1200, 1);
                 model.rotation.y = start + (end - start) * (1 - Math.pow(1 - progress, 3));
                 if (progress < 1) requestAnimationFrame(animateSpin);
             }
@@ -226,8 +278,8 @@
 
         window.resetView = function () {
             if (model) {
-                camera.position.set(15, 10, 15);
-                controls.target.set(0, 0, 0);
+                camera.position.set(12, 9, 14);
+                controls.target.set(0, 0.5, 0);
                 controls.update();
             }
         };
@@ -244,18 +296,17 @@
             if (starParticles) {
                 const pos = starParticles.geometry.attributes.position;
                 const vel = starParticles.userData.velocities;
-
                 for (let i = 0; i < pos.count; i++) {
                     const i3 = i * 3;
                     pos.array[i3] += vel[i3];
                     pos.array[i3 + 1] += vel[i3 + 1];
                     pos.array[i3 + 2] += vel[i3 + 2];
 
-                    const dist = Math.sqrt(pos.array[i3]**2 + pos.array[i3+1]**2 + pos.array[i3+2]**2);
-                    if (dist > 40) {
-                        pos.array[i3] = (Math.random() - 0.5) * 60;
-                        pos.array[i3 + 1] = (Math.random() - 0.5) * 60;
-                        pos.array[i3 + 2] = (Math.random() - 0.5) * 60;
+                    const dist = Math.hypot(pos.array[i3], pos.array[i3+1], pos.array[i3+2]);
+                    if (dist > 45) {
+                        pos.array[i3] = (Math.random() - 0.5) * 70;
+                        pos.array[i3 + 1] = (Math.random() - 0.5) * 70;
+                        pos.array[i3 + 2] = (Math.random() - 0.5) * 70;
                     }
                 }
                 pos.needsUpdate = true;
