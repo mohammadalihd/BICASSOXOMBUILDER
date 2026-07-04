@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pepe</title>
+
+    <!-- Favicon 🐸 -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='78' x='50' text-anchor='middle' font-size='78'%3E🐸%3C/text%3E%3C/svg%3E">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #0a0a0a; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="absolute top-0 left-0 right-0 z-50 px-5 py-3 flex items-center bg-black/60">
+        <h1 class="text-2xl font-semibold text-white tracking-tight">pepe</h1>
+    </div>
+
+    <!-- Control Panel (فقط دسکتاپ) -->
+    <div class="control-panel hidden md:block absolute top-20 right-5 z-50 w-72 bg-zinc-900/95 border border-white/10 rounded-3xl p-5 text-white">
+        
+        <div class="mb-5">
+            <div class="text-[10px] text-zinc-400 mb-1.5 px-1">LIGHTING</div>
+            <div class="grid grid-cols-3 gap-1.5">
+                <button onclick="applyLightingPreset('studio')" class="text-xs py-2 rounded-2xl bg-white/10 hover:bg-white/20 active:bg-white/30">Studio</button>
+                <button onclick="applyLightingPreset('dramatic')" class="text-xs py-2 rounded-2xl bg-white/10 hover:bg-white/20 active:bg-white/30">Dramatic</button>
+                <button onclick="applyLightingPreset('sunset')" class="text-xs py-2 rounded-2xl bg-white/10 hover:bg-white/20 active:bg-white/30">Sunset</button>
+            </div>
+        </div>
+
+        <div>
+            <div class="text-[10px] text-zinc-400 mb-1.5 px-1">ROTATION</div>
+            
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm">Auto Rotate</span>
+                <button onclick="toggleAutoRotate()" id="autoBtn"
+                        class="px-4 py-0.5 text-xs rounded-full bg-emerald-600">ON</button>
+            </div>
+
+            <div class="mb-2.5">
+                <div class="flex justify-between text-xs mb-1">
+                    <span>Speed</span>
+                    <span id="speedVal">0.35</span>
+                </div>
+                <input type="range" id="speedSlider" min="0.05" max="2" step="0.05" value="0.35"
+                       class="w-full accent-emerald-500" oninput="updateSpeed()">
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="spin360()" class="flex-1 bg-white/10 hover:bg-white/20 active:bg-white/30 py-2 rounded-2xl text-sm">Spin 360°</button>
+                <button onclick="resetView()" class="flex-1 bg-white/10 hover:bg-white/20 active:bg-white/30 py-2 rounded-2xl text-sm">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading" class="absolute inset-0 z-50 flex items-center justify-center bg-black">
+        <div class="text-center px-4">
+            <img src="https://arweave.net/gh82aALwC-_KyeLWzvbLhS3EX1SHuu4UfEox0K_p1c0" 
+                 alt="Loading" 
+                 class="max-w-[260px] md:max-w-[340px] mx-auto mb-6 rounded-2xl shadow-2xl">
+
+            <div class="w-64 h-1 bg-white/20 rounded-full mx-auto overflow-hidden mb-2">
+                <div id="progress-bar" class="h-1 bg-white transition-all duration-200" style="width: 0%"></div>
+            </div>
+            <p id="progress-text" class="text-emerald-400 text-sm font-mono">0%</p>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+        // مدل جدید (TX ID که دادی)
+        const modelUrl = 'https://arweave.net/NR9SgPKOXKZxdBX6TivN-ES-ZYugdp5ldvAiOj8Pls8';
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.35;
+
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x222222, 1.1);
+        scene.add(hemiLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 2.2);
+        dirLight.position.set(8, 12, 6);
+        scene.add(dirLight);
+
+        // ================== STAR PARTICLES ==================
+        let starParticles;
+        function createStarParticles() {
+            const count = 4800;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(count * 3);
+            const velocities = new Float32Array(count * 3);
+
+            for (let i = 0; i < count; i++) {
+                const i3 = i * 3;
+                positions[i3] = (Math.random() - 0.5) * 70;
+                positions[i3 + 1] = (Math.random() - 0.5) * 70;
+                positions[i3 + 2] = (Math.random() - 0.5) * 70;
+
+                velocities[i3] = (Math.random() - 0.5) * 0.0025;
+                velocities[i3 + 1] = (Math.random() - 0.5) * 0.0025;
+                velocities[i3 + 2] = (Math.random() - 0.5) * 0.0025;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.032,
+                color: 0xdddddd,
+                transparent: true,
+                opacity: 0.85,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending,
+                sizeAttenuation: true,
+            });
+
+            starParticles = new THREE.Points(geometry, material);
+            scene.add(starParticles);
+            starParticles.userData.velocities = velocities;
+        }
+
+        // ================== MODEL LOADING ==================
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+        const loader = new GLTFLoader();
+        loader.setDRACOLoader(dracoLoader);
+
+        let model;
+        const loadingScreen = document.getElementById('loading');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+
+        loader.load(modelUrl,
+            function (gltf) {
+                model = gltf.scene;
+                scene.add(model);
+
+                const box = new THREE.Box3().setFromObject(model);
+                const center = box.getCenter(new THREE.Vector3());
+                model.position.sub(center);
+
+                const size = box.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const cameraZ = maxDim * 1.6;
+
+                camera.position.set(cameraZ * 0.65, maxDim * 1.1, cameraZ);
+                camera.lookAt(0, maxDim * 0.25, 0);
+                controls.target.set(0, maxDim * 0.2, 0);
+                controls.update();
+
+                loadingScreen.style.transition = 'opacity 0.6s ease';
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => loadingScreen.style.display = 'none', 600);
+            },
+            function (xhr) {
+                if (xhr.lengthComputable) {
+                    const percent = Math.round((xhr.loaded / xhr.total) * 100);
+                    progressBar.style.width = percent + '%';
+                    progressText.textContent = percent + '%';
+                }
+            },
+            function (error) {
+                console.error("Model Load Error:", error);
+                progressText.style.color = '#f87171';
+                progressText.innerHTML = `Failed to load model<br><span style="font-size:11px">Check console (F12)</span>`;
+            }
+        );
+
+        // ================== CONTROLS ==================
+        window.applyLightingPreset = function (preset) {
+            if (preset === 'studio') { dirLight.intensity = 2.2; dirLight.position.set(8, 12, 6); }
+            else if (preset === 'dramatic') { dirLight.intensity = 3.5; dirLight.position.set(-12, 9, -6); }
+            else if (preset === 'sunset') { dirLight.intensity = 2.8; dirLight.position.set(10, 7, 12); }
+        };
+
+        window.toggleAutoRotate = function () {
+            controls.autoRotate = !controls.autoRotate;
+            document.getElementById('autoBtn').textContent = controls.autoRotate ? "ON" : "OFF";
+        };
+
+        window.updateSpeed = function () {
+            const speed = parseFloat(document.getElementById('speedSlider').value);
+            controls.autoRotateSpeed = speed;
+            document.getElementById('speedVal').textContent = speed.toFixed(2);
+        };
+
+        window.spin360 = function () {
+            if (!model) return;
+            const start = model.rotation.y;
+            const end = start + Math.PI * 2;
+            const startTime = Date.now();
+            function animateSpin() {
+                const progress = Math.min((Date.now() - startTime) / 1300, 1);
+                model.rotation.y = start + (end - start) * (1 - Math.pow(1 - progress, 3));
+                if (progress < 1) requestAnimationFrame(animateSpin);
+            }
+            animateSpin();
+        };
+
+        window.resetView = function () {
+            if (model) {
+                camera.position.set(15, 10, 15);
+                controls.target.set(0, 0, 0);
+                controls.update();
+            }
+        };
+
+        function init() {
+            createStarParticles();
+            document.getElementById('speedVal').textContent = controls.autoRotateSpeed.toFixed(2);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+
+            if (starParticles) {
+                const pos = starParticles.geometry.attributes.position;
+                const vel = starParticles.userData.velocities;
+
+                for (let i = 0; i < pos.count; i++) {
+                    const i3 = i * 3;
+                    pos.array[i3] += vel[i3];
+                    pos.array[i3 + 1] += vel[i3 + 1];
+                    pos.array[i3 + 2] += vel[i3 + 2];
+
+                    const dist = Math.sqrt(pos.array[i3]**2 + pos.array[i3+1]**2 + pos.array[i3+2]**2);
+                    if (dist > 40) {
+                        pos.array[i3] = (Math.random() - 0.5) * 60;
+                        pos.array[i3 + 1] = (Math.random() - 0.5) * 60;
+                        pos.array[i3 + 2] = (Math.random() - 0.5) * 60;
+                    }
+                }
+                pos.needsUpdate = true;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init();
+        animate();
+    </script>
+</body>
+</html>
